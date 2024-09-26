@@ -249,6 +249,15 @@ utilize STARTTLS, regardless of this variable, if the server offers STARTTLS.
 If enabled, report via SMTP regardless of exit status (this is the default behaviour).
 Otherwise, only report if one or more jobs failed.
 
+### `WEBHOOK_URL`
+
+Url that is used to send the webhook report.
+
+### `WEBHOOK_REPORT_SUCCESS`
+
+If enabled, report via Webhook regardless of exit status (this is the default
+behaviour). Otherwise, only report if one or more jobs failed.
+
 ### `SRC`
 
 What to back up.
