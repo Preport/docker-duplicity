@@ -58,7 +58,8 @@ RUN apk add --no-cache \
         openssl \
         rsync \
         tzdata \
-    && sync
+        megacmd \
+  && sync
 
 # Default backup source directory
 RUN mkdir -p "$SRC"
