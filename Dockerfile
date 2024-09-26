@@ -29,6 +29,8 @@ ENV CRONTAB_15MIN='*/15 * * * *' \
     SMTP_PASS='' \
     SMTP_TLS='' \
     SMTP_REPORT_SUCCESS='1' \
+    WEBHOOK_URL='' \
+    WEBHOOK_REPORT_SUCCESS='1' \
     SRC='/mnt/backup/src'
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]

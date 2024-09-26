@@ -35,6 +35,10 @@ smtp_report_success = environ.get("SMTP_REPORT_SUCCESS").lower() in {"1", "true"
 from_ = environ.get("EMAIL_FROM")
 to = environ.get("EMAIL_TO")
 subject = environ.get("EMAIL_SUBJECT")
+
+# Webhook settings
+webhook_url = environ.get("WEBHOOK_URL")
+webhook_report_success = environ.get("WEBHOOK_REPORT_SUCCESS").lower() in {"1", "true"}
 healthchecks_request_timeout = 5
 
 # Get the commands we need to run
@@ -178,8 +182,23 @@ if all((smtp_report_success or failed, smtp_host, smtp_port, from_, to, subject)
     finally:
         if smtp is not None:
             smtp.quit()
-else:
-    logging.info("Finished")
+if all((webhook_report_success or failed, webhook_url)):
+    logging.info("Sending webhook report")
+    data = '{"content":null,"embeds":[{"title":"%s","color":%s,"description":"%s","author":{"name":"%s"},"timestamp":"%s"}]}' % (
+        periodicity + " ERROR" if failed else " OK",
+        "16711680" if failed else "65280",
+        "\n".join(message)[:4095].replace('"', '\\"').replace("\n", "\\n"),
+        getfqdn(),
+        datetime.now().isoformat(),
+    )
+    print(data)
+    try:
+        requests.post(webhook_url, data=data, headers={"Content-Type": "application/json"})
+    except Exception:
+        logging.exception("Failed sending webhook")
+
+
+logging.info("Finished")
 
 if failed:
     sys.exit("At least one job failed")
