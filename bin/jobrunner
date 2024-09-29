@@ -153,7 +153,8 @@ for njob, command in sorted(to_run.items()):
 
 # remove passwords from the message
 pattern = r"(\S+:\/\/\S+:)(\S+)(@\S+)"
-message = re.sub(pattern, r"\1REDACTED\3", message)
+for i in range(len(message)):
+  message[i] = re.sub(pattern, r"\1REDACTED\3", message[i])
 # Report results
 if all((smtp_report_success or failed, smtp_host, smtp_port, from_, to, subject)):
     logging.info("Sending email report")
