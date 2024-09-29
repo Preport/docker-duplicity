@@ -151,6 +151,9 @@ for njob, command in sorted(to_run.items()):
             message += ["Failed to send uptime kuma ping request"]
             logging.exception(message[-1])
 
+# remove passwords from the message
+pattern = r"(\S+:\/\/\S+:)(\S+)(@\S+)"
+message = re.sub(pattern, r"\1REDACTED\3", message)
 # Report results
 if all((smtp_report_success or failed, smtp_host, smtp_port, from_, to, subject)):
     logging.info("Sending email report")
