@@ -33,6 +33,8 @@
   - [`SMTP_PASS`](#smtp_pass)
   - [`SMTP_TLS`](#smtp_tls)
   - [`SMTP_REPORT_SUCCESS`](#smtp_report_success)
+  - [`WEBHOOK_URL`](#webhook_url)
+  - [`WEBHOOK_REPORT_SUCCESS`](#webhook_report_success)
   - [`SRC`](#src)
   - [`TZ`](#tz)
 - [Set a custom hostname!](#set-a-custom-hostname)

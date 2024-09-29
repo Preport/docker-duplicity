@@ -184,7 +184,7 @@ if all((smtp_report_success or failed, smtp_host, smtp_port, from_, to, subject)
             smtp.quit()
 if all((webhook_report_success or failed, webhook_url)):
     logging.info("Sending webhook report")
-    data = '{"content":null,"embeds":[{"title":"%s","color":%s,"description":"%s","author":{"name":"%s"},"timestamp":"%s"}]}' % (
+    data = '{{"content":null,"embeds":[{{"title":"{}","color":{},"description":"{}","author":{{"name":"{}"}},"timestamp":"{}"}}]}}'.format(
         periodicity + " ERROR" if failed else " OK",
         "16711680" if failed else "65280",
         "\n".join(message)[:4095].replace('"', '\\"').replace("\n", "\\n"),
@@ -193,7 +193,9 @@ if all((webhook_report_success or failed, webhook_url)):
     )
     print(data)
     try:
-        requests.post(webhook_url, data=data, headers={"Content-Type": "application/json"})
+        requests.post(
+            webhook_url, data=data, headers={"Content-Type": "application/json"}
+        )
     except Exception:
         logging.exception("Failed sending webhook")
 
