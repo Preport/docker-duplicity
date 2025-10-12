@@ -1,14 +1,15 @@
-FROM python:3.12.6-slim AS builder
+FROM python:3.13.7-slim AS builder
 
 WORKDIR /app
 ADD pyproject.toml poetry.lock ./
-RUN pip install --no-cache-dir poetry
+RUN pip install --no-cache-dir poetry==2.0.1
+RUN poetry self add poetry-plugin-export
 
 # Build a requirements.txt file matching poetry.lock, that pip understands
 # Test comment
 RUN poetry export --extras duplicity --output /app/requirements.txt
 
-FROM python:3.12.6-alpine AS base
+FROM python:3.13.7-alpine AS base
 
 ENV CRONTAB_15MIN='*/15 * * * *' \
     CRONTAB_HOURLY='0 * * * *' \
@@ -35,13 +36,6 @@ ENV CRONTAB_15MIN='*/15 * * * *' \
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
 CMD ["/usr/sbin/crond", "-fd8"]
-
-# Link the job runner in all periodicities available
-RUN ln -s /usr/local/bin/jobrunner /etc/periodic/15min/jobrunner
-RUN ln -s /usr/local/bin/jobrunner /etc/periodic/hourly/jobrunner
-RUN ln -s /usr/local/bin/jobrunner /etc/periodic/daily/jobrunner
-RUN ln -s /usr/local/bin/jobrunner /etc/periodic/weekly/jobrunner
-RUN ln -s /usr/local/bin/jobrunner /etc/periodic/monthly/jobrunner
 
 # Runtime dependencies and database clients
 RUN apk add --no-cache \
@@ -71,15 +65,19 @@ VOLUME [ "/root" ]
 COPY --from=builder /app/requirements.txt requirements.txt
 RUN apk add --no-cache --virtual .build \
         build-base \
+        python3-dev \
         krb5-dev \
         libffi-dev \
         librsync-dev \
         libxml2-dev \
         libxslt-dev \
         openssl-dev \
-        cargo \
-    # Runtime dependencies, based on https://gitlab.com/duplicity/duplicity/-/blob/master/requirements.txt
-    && pip install --no-cache-dir -r requirements.txt \
+        cargo
+# Trick for passing as a warning this build message and gets netifaces installed:
+#    initialization of 'int' from 'void *' makes integer from pointer without a cast [-Wint-conversion]
+RUN CFLAGS="-Wno-int-conversion" pip install netifaces
+# Runtime dependencies, based on https://gitlab.com/duplicity/duplicity/-/blob/master/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
     && apk del .build \
     && rm -rf /root/.cargo
 
@@ -121,6 +119,7 @@ RUN set -eux; \
         "$APK_POSTGRES_DIR/14" \
         "$APK_POSTGRES_DIR/15" \
         "$APK_POSTGRES_DIR/16" \
+        "$APK_POSTGRES_DIR/17" \
         "$APK_POSTGRES_DIR/latest"; \
     echo "http://dl-cdn.alpinelinux.org/alpine/v3.8/main" > psql_repos; \
     apk fetch --no-cache --repositories-file psql_repos postgresql-client -o "$APK_POSTGRES_DIR/10"; \
@@ -130,9 +129,14 @@ RUN set -eux; \
     apk fetch --no-cache --repositories-file psql_repos postgresql-client -o "$APK_POSTGRES_DIR/12"; \
     echo "http://dl-cdn.alpinelinux.org/alpine/v3.14/main" > psql_repos; \
     apk fetch --no-cache --repositories-file psql_repos postgresql-client -o "$APK_POSTGRES_DIR/13"; \
-    apk fetch --no-cache postgresql14-client -o "$APK_POSTGRES_DIR/14"; \
-    apk fetch --no-cache postgresql15-client -o "$APK_POSTGRES_DIR/15"; \
-    apk fetch --no-cache postgresql16-client -o "$APK_POSTGRES_DIR/16"; \
+    echo "http://dl-cdn.alpinelinux.org/alpine/v3.17/main" > psql_repos; \
+    apk fetch --no-cache --repositories-file psql_repos postgresql14-client -o "$APK_POSTGRES_DIR/14"; \
+    echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/main" > psql_repos; \
+    apk fetch --no-cache --repositories-file psql_repos postgresql15-client -o "$APK_POSTGRES_DIR/15"; \
+    echo "http://dl-cdn.alpinelinux.org/alpine/v3.21/main" > psql_repos; \
+    apk fetch --no-cache --repositories-file psql_repos postgresql16-client -o "$APK_POSTGRES_DIR/16"; \
+    echo "http://dl-cdn.alpinelinux.org/alpine/v3.22/main" > psql_repos; \
+    apk fetch --no-cache --repositories-file psql_repos postgresql17-client -o "$APK_POSTGRES_DIR/17"; \
     apk fetch --no-cache postgresql-client -o "$APK_POSTGRES_DIR/latest"; \
     rm psql_repos;
 
